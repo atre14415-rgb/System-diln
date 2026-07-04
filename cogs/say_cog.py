@@ -3,7 +3,7 @@ from discord.ext import commands
 from discord import app_commands
 
 # ⚠️ آيدي السيرفر للظهور السريع للأمر
-MY_GUILD = discord.Object(id=1439839910172295303) 
+MY_GUILD = discord.Object(id=1518871277740228608) 
 
 class SaySystem(commands.Cog):
     def __init__(self, bot):
