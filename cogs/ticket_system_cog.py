@@ -23,6 +23,17 @@ def save_json(file_path, data):
 
 # ----------------- قوائم التفاعل (UI Views) ----------------- #
 
+class DownloadTranscriptView(discord.ui.View):
+    def __init__(self, file_bytes: bytes, filename: str):
+        super().__init__(timeout=None)
+        self.file_bytes = file_bytes
+        self.filename = filename
+
+    @discord.ui.button(label="تنزيل الـ Transcript", style=discord.Style.primary, emoji="📥", custom_id="download_transcript_btn")
+    async def download_button(self, interaction: discord.Interaction):
+        file = discord.File(io.BytesIO(self.file_bytes), filename=self.filename)
+        await interaction.response.send_message(content="إليك ملف النسخة الاحتياطية للتذكرة:", file=file, ephemeral=True)
+
 class ManageTicketSelect(discord.ui.Select):
     def __init__(self):
         options = [
@@ -111,26 +122,39 @@ class ManageTicketSelect(discord.ui.Select):
             
             # إنشاء ترانسكربت (HTML)
             transcript = await chat_exporter.export(interaction.channel)
-            transcript_file = discord.File(io.BytesIO(transcript.encode()), filename=f"transcript-{interaction.channel.name}.html")
+            transcript_bytes = transcript.encode() if transcript else b"No messages to export."
+            filename = f"transcript-{interaction.channel.name}.html"
+            
+            opener_id = ticket_data.get("opener_id")
+            opener = interaction.guild.get_member(opener_id)
+            claimer_id = ticket_data.get("claimer_id")
+            closer_id = ticket_data.get("closer_id") or interaction.user.id
+            
+            opener_text = opener.mention if opener else f"<@{opener_id}>"
+            claimer_text = f"<@{claimer_id}>" if claimer_id else "لم يتم الاستلام"
+            closer_text = f"<@{closer_id}>"
+            
+            log_embed = discord.Embed(title="📑 سجل تذكرة محذوفة", color=discord.Color.dark_grey())
+            log_embed.add_field(name="صاحب التذكرة", value=opener_text, inline=True)
+            log_embed.add_field(name="المستلم", value=claimer_text, inline=True)
+            log_embed.add_field(name="مغلق/حاذف التذكرة", value=closer_text, inline=True)
+            log_embed.add_field(name="وقت الفتح", value=ticket_data.get("open_time", "غير معروف"), inline=True)
+            log_embed.add_field(name="وقت الإغلاق/الحذف", value=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), inline=True)
+            
+            download_view = DownloadTranscriptView(transcript_bytes, filename)
 
+            # إرسال اللوق لروم السجلات
             if log_channel:
-                opener_id = ticket_data.get("opener_id")
-                opener = interaction.guild.get_member(opener_id)
-                claimer_id = ticket_data.get("claimer_id")
-                closer_id = ticket_data.get("closer_id") or interaction.user.id
-                
-                opener_text = opener.mention if opener else f"<@{opener_id}>"
-                claimer_text = f"<@{claimer_id}>" if claimer_id else "لم يتم الاستلام"
-                closer_text = f"<@{closer_id}>"
-                
-                log_embed = discord.Embed(title="📑 سجل تذكرة محذوفة", color=discord.Color.dark_grey())
-                log_embed.add_field(name="صاحب التذكرة", value=opener_text, inline=True)
-                log_embed.add_field(name="المستلم", value=claimer_text, inline=True)
-                log_embed.add_field(name="مغلق/حاذف التذكرة", value=closer_text, inline=True)
-                log_embed.add_field(name="وقت الفتح", value=ticket_data.get("open_time", "غير معروف"), inline=True)
-                log_embed.add_field(name="وقت الإغلاق/الحذف", value=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), inline=True)
-                
-                await log_channel.send(embed=log_embed, file=transcript_file)
+                await log_channel.send(embed=log_embed, view=download_view)
+
+            # إرسال اللوق لخاص العضو مع الزر
+            if opener:
+                try:
+                    dm_embed = log_embed.copy()
+                    dm_embed.title = f"📑 سجل تذكرتك في سيرفر {interaction.guild.name}"
+                    await opener.send(embed=dm_embed, view=download_view)
+                except discord.Forbidden:
+                    pass
             
             if channel_id in active_tickets:
                 del active_tickets[channel_id]
@@ -163,8 +187,9 @@ class TicketPanelSelect(discord.ui.Select):
 
         await interaction.response.defer(ephemeral=True)
 
-        # استبدال {user} باسم المستخدم في اسم الروم
-        channel_name = config["ticket_name_format"].replace("{user}", interaction.user.name)
+        # تعديل اسم الروم ليكون دائماً (تذكرة-اسم العضو-ايدي العضو)
+        safe_name = interaction.user.name.replace(" ", "-").lower()
+        channel_name = f"تذكرة-{safe_name}-{interaction.user.id}"
 
         overwrites = {
             interaction.guild.default_role: discord.PermissionOverwrite(view_channel=False),
@@ -221,6 +246,7 @@ class TicketSystemm(commands.Cog):
     async def on_ready(self):
         # تفعيل الأزرار الثابتة عند إعادة تشغيل البوت
         self.bot.add_view(TicketManageView())
+        self.bot.add_view(DownloadTranscriptView(b"", ""))
         
         configs = load_json(CONFIG_FILE)
         if configs:
