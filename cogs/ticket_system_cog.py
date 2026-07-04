@@ -287,7 +287,7 @@ class TicketSystemm(commands.Cog):
 
     @app_commands.command(name="send_panel", description="إرسال لوحة فتح التذاكر للأعضاء")
     @app_commands.checks.has_permissions(administrator=True)
-    async def send_panel(self, interaction: discord.Interaction, title: str, description: str):
+    async def send_panel(self, interaction: discord.Interaction, title: str, description: str, image_url: str = None):
         configs = load_json(CONFIG_FILE)
         
         if not configs:
@@ -300,6 +300,11 @@ class TicketSystemm(commands.Cog):
                 break
 
         embed = discord.Embed(title=title, description=description, color=discord.Color.dark_theme())
+        
+        # إضافة الصورة إذا قام الإداري بوضع رابطها
+        if image_url:
+            embed.set_image(url=image_url)
+
         view = TicketPanelView(options)
 
         await interaction.channel.send(embed=embed, view=view)
