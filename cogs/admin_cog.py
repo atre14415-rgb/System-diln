@@ -22,9 +22,9 @@ class AdminSelect(discord.ui.Select):
 
     # الحدث الذي يحصل عند اختيار شيء من المنيو
     async def callback(self, interaction: discord.Interaction):
-        # حماية إضافية: التأكد أن من ضغط الزر هو المطور فقط
-        if not await self.bot.is_owner(interaction.user):
-            return await interaction.response.send_message("❌ هذه اللوحة مخصصة لمطور البوت فقط!", ephemeral=True)
+        # حماية إضافية: التأكد أن من ضغط الزر يملك صلاحية Administrator في السيرفر
+        if not interaction.user.guild_permissions.administrator:
+            return await interaction.response.send_message("❌ هذه اللوحة مخصصة للإداريين (Administrator) فقط!", ephemeral=True)
 
         choice = self.values[0]
 
@@ -53,12 +53,12 @@ class AdminSelect(discord.ui.Select):
             action_name = "الأفتار" if choice == "avatar" else "البنر"
             await interaction.response.send_message(f"📥 يرجى إرسال الصورة هنا في الشات لتغيير **{action_name}**.\n*(لديك 60 ثانية...)*", ephemeral=True)
 
-            # دالة للتحقق أن الرسالة القادمة من المطور وفي نفس الروم وتحتوي على مرفق
+            # دالة للتحقق أن الرسالة القادمة من نفس الإداري وفي نفس الروم وتحتوي على مرفق
             def check(m):
                 return m.author == interaction.user and m.channel == interaction.channel and m.attachments
 
             try:
-                # انتظار رسالة المطور التي تحتوي على الصورة
+                # انتظار رسالة الإداري التي تحتوي على الصورة
                 msg = await self.bot.wait_for('message', timeout=60.0, check=check)
                 image_bytes = await msg.attachments[0].read()
                 
@@ -90,10 +90,10 @@ class AdminSettings(commands.Cog):
 
     # أمر إظهار لوحة التحكم (المنيو)
     @commands.command(name="panel", aliases=["admin"])
-    @commands.is_owner()
+    @commands.has_permissions(administrator=True) # التحقق من أن منفذ الأمر لديه صلاحية إداري
     async def admin_panel(self, ctx):
         embed = discord.Embed(
-            title="🛠️ لوحة تحكم ",
+            title="🛠️ لوحة تحكم الإدارة",
             description="مرحباً بك في لوحة التحكم المركزية.\nاستخدم القائمة المنسدلة بالأسفل لاختيار الإجراء الذي تريده.",
             color=discord.Color.red()
         )
