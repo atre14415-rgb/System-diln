@@ -1,0 +1,13 @@
+discord.py
+python-dotenv
+aiohttp
+discord.py
+python-dotenv
+aiohttp
+aiosqlite     
+asyncpg        
+pymongo         
+Pillow          
+requests       
+yt-dlp
+chat-exporter
