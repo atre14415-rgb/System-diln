@@ -188,9 +188,13 @@ class TicketPanelSelect(discord.ui.Select):
 
         await interaction.response.defer(ephemeral=True)
 
-        # تعديل اسم الروم ليكون دائماً (تذكرة-اسم العضو-ايدي العضو)
-        safe_name = interaction.user.name.replace(" ", "-").lower()
-        channel_name = f"تذكرة-{safe_name}-{interaction.user.id}"
+        # ---------------------------------------------------------
+        # التعديل هنا: جعل اسم الروم يتكون من (نوع التذكرة - اسم الشخص)
+        # تم استبدال المسافات بعلامة "-" لتجنب مشاكل ديسكورد في تسمية الرومات
+        safe_type = ticket_type.replace(" ", "-")
+        safe_name = interaction.user.name.replace(" ", "-")
+        channel_name = f"{safe_type}-{safe_name}"
+        # ---------------------------------------------------------
 
         overwrites = {
             interaction.guild.default_role: discord.PermissionOverwrite(view_channel=False),
