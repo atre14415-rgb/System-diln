@@ -213,7 +213,7 @@ class TicketPanelView(discord.ui.View):
 
 # ----------------- الكوج (Cog) ----------------- #
 
-class TicketSystem(commands.Cog):
+class TicketSystemm(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -279,4 +279,4 @@ class TicketSystem(commands.Cog):
         await interaction.response.send_message("✅ تم إرسال لوحة التذاكر بنجاح.", ephemeral=True)
 
 async def setup(bot):
-    await bot.add_cog(TicketSystem(bot))
+    await bot.add_cog(TicketSystemm(bot))
