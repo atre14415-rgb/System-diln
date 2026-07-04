@@ -19,6 +19,12 @@ async def on_ready():
     print(f'🆔 معرف البوت: {bot.user.id}')
     print('-----------------------------------------')
     
+    # 🎧 إعداد حالة البوت (Listening)
+    # إذا أردتها مشاهدة بدلاً من استماع، قم بتغيير .listening إلى .watching
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name="Diln"))
+    print("🎧 تم تعيين حالة البوت إلى: Listening to Diln")
+    print('-----------------------------------------')
+
     # تحديث أوامر السلاش (Slash Commands)
     try:
         # 1. تحديث الأوامر العامة (تأخذ وقت لتظهر في كل السيرفرات)
