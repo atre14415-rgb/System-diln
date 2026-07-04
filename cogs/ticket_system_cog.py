@@ -29,8 +29,9 @@ class DownloadTranscriptView(discord.ui.View):
         self.file_bytes = file_bytes
         self.filename = filename
 
-    @discord.ui.button(label="تنزيل الـ Transcript", style=discord.Style.primary, emoji="📥", custom_id="download_transcript_btn")
-    async def download_button(self, interaction: discord.Interaction):
+    # تم التعديل هنا إلى discord.ButtonStyle.primary
+    @discord.ui.button(label="تنزيل الـ Transcript", style=discord.ButtonStyle.primary, emoji="📥", custom_id="download_transcript_btn")
+    async def download_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         file = discord.File(io.BytesIO(self.file_bytes), filename=self.filename)
         await interaction.response.send_message(content="إليك ملف النسخة الاحتياطية للتذكرة:", file=file, ephemeral=True)
 
