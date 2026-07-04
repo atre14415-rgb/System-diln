@@ -8,7 +8,7 @@ class ImageProtection(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         # ضع أيدي روم اللوق هنا
-        self.log_channel_id = 1522721513457844254  
+        self.log_channel_id = 1522756375283892245 
         
         # ملفات قاعدة البيانات (JSON)
         self.banned_images_file = "banned_images.json"
